@@ -56,7 +56,19 @@ const Register = () => {
       }
     } catch (error) {
       console.error('Registration error:', error);
-      setError('Failed to create account. Please try again.');
+      let errorMessage = 'Failed to create account. Please try again.';
+      
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'An account with this email already exists.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Password is too weak. Please choose a stronger password.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.code === 'auth/configuration-not-found') {
+        errorMessage = 'Firebase configuration error. Please contact support.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
