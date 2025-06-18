@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Filter, 
@@ -13,13 +13,13 @@ import {
   X
 } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { products, getProductsByCategory, searchProducts } from '../data/products';
 
 const Products = () => {
   const { category } = useParams();
   const [searchParams] = useSearchParams();
   const { addToCart } = useCart();
   
-  const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('grid');
@@ -31,103 +31,14 @@ const Products = () => {
   const [selectedColors, setSelectedColors] = useState([]);
   const [wishlist, setWishlist] = useState([]);
 
-  // Mock product data - in real app, this would come from Firebase
-  const mockProducts = [
-    {
-      id: 1,
-      name: 'Classic Cotton T-Shirt',
-      price: 29.99,
-      originalPrice: 39.99,
-      category: 'men',
-      image: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=400',
-      rating: 4.5,
-      reviews: 124,
-      colors: ['black', 'white', 'navy'],
-      sizes: ['S', 'M', 'L', 'XL'],
-      isNew: false,
-      onSale: true
-    },
-    {
-      id: 2,
-      name: 'Elegant Evening Dress',
-      price: 149.99,
-      originalPrice: 199.99,
-      category: 'women',
-      image: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=400',
-      rating: 4.8,
-      reviews: 89,
-      colors: ['black', 'navy', 'burgundy'],
-      sizes: ['XS', 'S', 'M', 'L'],
-      isNew: true,
-      onSale: true
-    },
-    {
-      id: 3,
-      name: 'Kids Rainbow Sweater',
-      price: 34.99,
-      originalPrice: 34.99,
-      category: 'kids',
-      image: 'https://images.pexels.com/photos/1642883/pexels-photo-1642883.jpeg?auto=compress&cs=tinysrgb&w=400',
-      rating: 4.6,
-      reviews: 67,
-      colors: ['multicolor', 'pink', 'blue'],
-      sizes: ['2T', '3T', '4T', '5T'],
-      isNew: true,
-      onSale: false
-    },
-    {
-      id: 4,
-      name: 'Premium Denim Jeans',
-      price: 89.99,
-      originalPrice: 89.99,
-      category: 'men',
-      image: 'https://images.pexels.com/photos/1598505/pexels-photo-1598505.jpeg?auto=compress&cs=tinysrgb&w=400',
-      rating: 4.7,
-      reviews: 156,
-      colors: ['blue', 'black', 'gray'],
-      sizes: ['28', '30', '32', '34', '36'],
-      isNew: false,
-      onSale: false
-    },
-    {
-      id: 5,
-      name: 'Floral Summer Blouse',
-      price: 54.99,
-      originalPrice: 64.99,
-      category: 'women',
-      image: 'https://images.pexels.com/photos/1536619/pexels-photo-1536619.jpeg?auto=compress&cs=tinysrgb&w=400',
-      rating: 4.4,
-      reviews: 92,
-      colors: ['floral', 'white', 'pink'],
-      sizes: ['XS', 'S', 'M', 'L', 'XL'],
-      isNew: false,
-      onSale: true
-    },
-    {
-      id: 6,
-      name: 'Cozy Kids Pajama Set',
-      price: 24.99,
-      originalPrice: 24.99,
-      category: 'kids',
-      image: 'https://images.pexels.com/photos/1620760/pexels-photo-1620760.jpeg?auto=compress&cs=tinysrgb&w=400',
-      rating: 4.9,
-      reviews: 203,
-      colors: ['blue', 'pink', 'green'],
-      sizes: ['2T', '3T', '4T', '5T', '6T'],
-      isNew: true,
-      onSale: false
-    }
-  ];
-
   const sizes = ['XS', 'S', 'M', 'L', 'XL', '2T', '3T', '4T', '5T', '6T', '28', '30', '32', '34', '36'];
   const colors = ['black', 'white', 'navy', 'blue', 'pink', 'gray', 'green', 'burgundy', 'multicolor', 'floral'];
 
   useEffect(() => {
     // Simulate loading
     setTimeout(() => {
-      setProducts(mockProducts);
       setLoading(false);
-    }, 1000);
+    }, 500);
   }, []);
 
   useEffect(() => {
@@ -135,14 +46,12 @@ const Products = () => {
 
     // Filter by category
     if (category) {
-      filtered = filtered.filter(product => product.category === category);
+      filtered = getProductsByCategory(category);
     }
 
     // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(product => 
-        product.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      filtered = searchProducts(searchTerm);
     }
 
     // Filter by price range
@@ -181,7 +90,7 @@ const Products = () => {
     });
 
     setFilteredProducts(filtered);
-  }, [products, category, searchTerm, priceRange, selectedSizes, selectedColors, sortBy]);
+  }, [category, searchTerm, priceRange, selectedSizes, selectedColors, sortBy]);
 
   const toggleWishlist = (productId) => {
     setWishlist(prev => 
@@ -432,13 +341,15 @@ const Products = () => {
                     }`}
                   >
                     <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : ''}`}>
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${
-                          viewMode === 'list' ? 'h-48' : 'h-64'
-                        }`}
-                      />
+                      <Link to={`/product/${product.id}`}>
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${
+                            viewMode === 'list' ? 'h-48' : 'h-64'
+                          }`}
+                        />
+                      </Link>
                       
                       {/* Badges */}
                       <div className="absolute top-2 left-2 flex flex-col gap-1">
@@ -468,9 +379,11 @@ const Products = () => {
                     </div>
 
                     <div className={`p-4 ${viewMode === 'list' ? 'flex-1' : ''}`}>
-                      <h3 className="font-semibold text-lg mb-2 group-hover:text-gold-600 transition-colors">
-                        {product.name}
-                      </h3>
+                      <Link to={`/product/${product.id}`}>
+                        <h3 className="font-semibold text-lg mb-2 group-hover:text-gold-600 transition-colors">
+                          {product.name}
+                        </h3>
+                      </Link>
                       
                       <div className="flex items-center mb-2">
                         <div className="flex items-center">

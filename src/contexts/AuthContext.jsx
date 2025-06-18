@@ -6,7 +6,7 @@ import {
   onAuthStateChanged,
   updateProfile
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, getDocs, collection } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 
 const AuthContext = createContext();
@@ -43,6 +43,7 @@ export const AuthProvider = ({ children }) => {
       
       return userCredential;
     } catch (error) {
+      console.error('Registration error:', error);
       throw error;
     }
   };
@@ -58,6 +59,7 @@ export const AuthProvider = ({ children }) => {
       
       return userCredential;
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
     }
   };
@@ -66,6 +68,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await signOut(auth);
     } catch (error) {
+      console.error('Logout error:', error);
       throw error;
     }
   };
@@ -111,17 +114,26 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const role = await getUserRole(user.uid);
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        const userData = userDoc.exists() ? userDoc.data() : {};
-        
-        setUser({ 
-          ...user, 
-          role,
-          ...userData
-        });
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          // Get user data from Firestore
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          const userData = userDoc.exists() ? userDoc.data() : {};
+          
+          setUser({ 
+            ...firebaseUser, 
+            role: userData.role || 'customer',
+            ...userData
+          });
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          // Set user with default role if Firestore fetch fails
+          setUser({ 
+            ...firebaseUser, 
+            role: 'customer'
+          });
+        }
       } else {
         setUser(null);
       }

@@ -23,25 +23,26 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const userCredential = await login(email, password);
-      const user = userCredential.user;
-      
-      // Get user role from Firestore
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      const userData = userDoc.exists() ? userDoc.data() : {};
-      const userRole = userData.role || 'customer';
-      
-      // Redirect based on role
-      if (userRole === 'admin') {
-        navigate('/admin', { replace: true });
-      } else if (userRole === 'moderator') {
-        navigate('/moderator', { replace: true });
-      } else {
-        navigate(from, { replace: true });
-      }
+      await login(email, password);
+      // Navigation will be handled by the auth state change in App.jsx
+      navigate(from, { replace: true });
     } catch (error) {
       console.error('Login error:', error);
-      setError('Failed to log in. Please check your credentials.');
+      let errorMessage = 'Failed to log in. Please check your credentials.';
+      
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email address.';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password. Please try again.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.code === 'auth/user-disabled') {
+        errorMessage = 'This account has been disabled.';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed attempts. Please try again later.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

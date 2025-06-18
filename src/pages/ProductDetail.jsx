@@ -15,6 +15,7 @@ import {
   Share2
 } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { getProductById } from '../data/products';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -30,50 +31,17 @@ const ProductDetail = () => {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [activeTab, setActiveTab] = useState('description');
 
-  // Mock product data - in real app, this would come from Firebase
-  const mockProduct = {
-    id: parseInt(id),
-    name: 'Premium Cotton T-Shirt',
-    price: 29.99,
-    originalPrice: 39.99,
-    category: 'men',
-    images: [
-      'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'https://images.pexels.com/photos/1598505/pexels-photo-1598505.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=800'
-    ],
-    rating: 4.5,
-    reviews: 124,
-    colors: ['black', 'white', 'navy', 'gray'],
-    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    inStock: 50,
-    description: 'Experience ultimate comfort with our premium cotton t-shirt. Made from 100% organic cotton, this versatile piece is perfect for everyday wear. The classic fit and soft fabric make it a wardrobe essential.',
-    features: [
-      '100% Organic Cotton',
-      'Pre-shrunk fabric',
-      'Reinforced seams',
-      'Machine washable',
-      'Eco-friendly dyes'
-    ],
-    careInstructions: [
-      'Machine wash cold with like colors',
-      'Do not bleach',
-      'Tumble dry low',
-      'Iron on low heat if needed',
-      'Do not dry clean'
-    ],
-    isNew: false,
-    onSale: true
-  };
-
   useEffect(() => {
     // Simulate loading
     setTimeout(() => {
-      setProduct(mockProduct);
-      setSelectedColor(mockProduct.colors[0]);
-      setSelectedSize(mockProduct.sizes[1]);
+      const foundProduct = getProductById(id);
+      if (foundProduct) {
+        setProduct(foundProduct);
+        setSelectedColor(foundProduct.colors[0]);
+        setSelectedSize(foundProduct.sizes[1] || foundProduct.sizes[0]);
+      }
       setLoading(false);
-    }, 1000);
+    }, 500);
   }, [id]);
 
   const handleAddToCart = () => {
@@ -86,7 +54,7 @@ const ProductDetail = () => {
       id: product.id,
       name: product.name,
       price: product.price,
-      image: product.images[0],
+      image: product.images ? product.images[0] : product.image,
       size: selectedSize,
       color: selectedColor,
       quantity: quantity
@@ -128,6 +96,8 @@ const ProductDetail = () => {
     );
   }
 
+  const productImages = product.images || [product.image];
+
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -164,31 +134,33 @@ const ProductDetail = () => {
             <div className="space-y-4">
               <div className="aspect-square bg-white rounded-2xl overflow-hidden shadow-lg">
                 <img
-                  src={product.images[selectedImage]}
+                  src={productImages[selectedImage]}
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />
               </div>
               
-              <div className="grid grid-cols-3 gap-4">
-                {product.images.map((image, index) => (
-                  <motion.button
-                    key={index}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setSelectedImage(index)}
-                    className={`aspect-square bg-white rounded-lg overflow-hidden shadow-md ${
-                      selectedImage === index ? 'ring-2 ring-gold-500' : ''
-                    }`}
-                  >
-                    <img
-                      src={image}
-                      alt={`${product.name} ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </motion.button>
-                ))}
-              </div>
+              {productImages.length > 1 && (
+                <div className="grid grid-cols-3 gap-4">
+                  {productImages.map((image, index) => (
+                    <motion.button
+                      key={index}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setSelectedImage(index)}
+                      className={`aspect-square bg-white rounded-lg overflow-hidden shadow-md ${
+                        selectedImage === index ? 'ring-2 ring-gold-500' : ''
+                      }`}
+                    >
+                      <img
+                        src={image}
+                        alt={`${product.name} ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </motion.button>
+                  ))}
+                </div>
+              )}
             </div>
           </motion.div>
 
@@ -264,8 +236,12 @@ const ProductDetail = () => {
                       color === 'black' ? 'bg-black' :
                       color === 'white' ? 'bg-white' :
                       color === 'navy' ? 'bg-blue-900' :
+                      color === 'blue' ? 'bg-blue-500' :
+                      color === 'pink' ? 'bg-pink-500' :
                       color === 'gray' ? 'bg-gray-500' :
-                      'bg-gray-400'
+                      color === 'green' ? 'bg-green-500' :
+                      color === 'burgundy' ? 'bg-red-800' :
+                      'bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500'
                     }`}
                   >
                     {selectedColor === color && (
@@ -415,7 +391,7 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {activeTab === 'features' && (
+            {activeTab === 'features' && product.features && (
               <div>
                 <h3 className="text-lg font-semibold mb-4">Product Features</h3>
                 <ul className="space-y-2">
@@ -429,7 +405,7 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {activeTab === 'care' && (
+            {activeTab === 'care' && product.careInstructions && (
               <div>
                 <h3 className="text-lg font-semibold mb-4">Care Instructions</h3>
                 <ul className="space-y-2">
