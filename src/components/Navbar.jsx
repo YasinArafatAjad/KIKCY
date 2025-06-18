@@ -66,6 +66,20 @@ const Navbar = () => {
     }
   };
 
+  // Get the appropriate dashboard route based on user role
+  const getDashboardRoute = () => {
+    if (!user) return '/dashboard';
+    
+    switch (user.role) {
+      case 'admin':
+        return '/admin';
+      case 'moderator':
+        return '/moderator';
+      default:
+        return '/dashboard';
+    }
+  };
+
   const navLinks = [
     { name: 'Home', path: '/', icon: Home },
     { name: 'Men', path: '/products/men', icon: ShoppingBag },
@@ -225,9 +239,14 @@ const Navbar = () => {
                       >
                         <div className="px-4 py-2 text-sm text-gray-700 border-b">
                           {user.displayName || user.email}
+                          {user.role && user.role !== 'customer' && (
+                            <div className="text-xs text-gold-600 capitalize">
+                              {user.role}
+                            </div>
+                          )}
                         </div>
                         <Link
-                          to="/dashboard"
+                          to={getDashboardRoute()}
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           onClick={() => setShowUserMenu(false)}
                         >
@@ -371,9 +390,14 @@ const Navbar = () => {
                     <>
                       <div className="px-3 py-2 text-sm text-gray-500">
                         {user.displayName || user.email}
+                        {user.role && user.role !== 'customer' && (
+                          <div className="text-xs text-gold-600 capitalize">
+                            {user.role}
+                          </div>
+                        )}
                       </div>
                       <Link
-                        to="/dashboard"
+                        to={getDashboardRoute()}
                         className="flex items-center px-3 py-2 text-base font-medium text-primary-700 hover:text-gold-600 hover:bg-gray-50 rounded-md"
                         onClick={() => setIsOpen(false)}
                       >
