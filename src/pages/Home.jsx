@@ -11,7 +11,8 @@ import {
   RefreshCw,
   Heart,
   Users,
-  Award
+  Award,
+  Package
 } from 'lucide-react';
 
 const Home = () => {
@@ -63,7 +64,7 @@ const Home = () => {
     {
       name: "Sarah Johnson",
       rating: 5,
-      comment: "Amazing quality and fast delivery! I love my new dresses from KICKY.",
+      comment: "Amazing quality and fast delivery! I love shopping at KICKY.",
       image: "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150"
     },
     {
@@ -75,14 +76,14 @@ const Home = () => {
     {
       name: "Emma Wilson",
       rating: 5,
-      comment: "The kids' clothes are so cute and comfortable. My children love them!",
+      comment: "The quality is outstanding and the styles are always on-trend!",
       image: "https://images.pexels.com/photos/1858175/pexels-photo-1858175.jpeg?auto=compress&cs=tinysrgb&w=150"
     }
   ];
 
   const stats = [
     { icon: Users, number: "50K+", label: "Happy Customers" },
-    { icon: ShoppingBag, number: "100K+", label: "Products Sold" },
+    { icon: Package, number: "10K+", label: "Products Available" },
     { icon: Award, number: "4.9", label: "Average Rating" },
     { icon: Heart, number: "99%", label: "Customer Satisfaction" }
   ];

@@ -12,7 +12,8 @@ import {
   Minus,
   Check,
   ArrowLeft,
-  Share2
+  Share2,
+  Package
 } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { getProductById } from '../data/products';
@@ -37,18 +38,15 @@ const ProductDetail = () => {
       const foundProduct = getProductById(id);
       if (foundProduct) {
         setProduct(foundProduct);
-        setSelectedColor(foundProduct.colors[0]);
-        setSelectedSize(foundProduct.sizes[1] || foundProduct.sizes[0]);
+        setSelectedColor(foundProduct.colors?.[0] || 'Default');
+        setSelectedSize(foundProduct.sizes?.[1] || foundProduct.sizes?.[0] || 'M');
       }
       setLoading(false);
     }, 500);
   }, [id]);
 
   const handleAddToCart = () => {
-    if (!selectedSize || !selectedColor) {
-      alert('Please select size and color');
-      return;
-    }
+    if (!product) return;
 
     addToCart({
       id: product.id,
@@ -63,7 +61,7 @@ const ProductDetail = () => {
 
   const handleQuantityChange = (change) => {
     const newQuantity = quantity + change;
-    if (newQuantity >= 1 && newQuantity <= product.inStock) {
+    if (newQuantity >= 1 && newQuantity <= (product?.inStock || 10)) {
       setQuantity(newQuantity);
     }
   };
@@ -84,12 +82,16 @@ const ProductDetail = () => {
     return (
       <div className="min-h-screen flex items-center justify-center pt-16">
         <div className="text-center">
+          <Package size={64} className="mx-auto text-gray-400 mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Product not found</h2>
+          <p className="text-gray-600 mb-6">
+            The product you're looking for doesn't exist or has been removed.
+          </p>
           <button
             onClick={() => navigate('/products')}
-            className="text-gold-600 hover:text-gold-700"
+            className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
-            Back to Products
+            Browse All Products
           </button>
         </div>
       </div>
@@ -187,30 +189,32 @@ const ProductDetail = () => {
               
               <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
               
-              <div className="flex items-center mb-4">
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      size={20}
-                      className={`${
-                        i < Math.floor(product.rating) 
-                          ? 'text-gold-500 fill-current' 
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  ))}
+              {product.rating && (
+                <div className="flex items-center mb-4">
+                  <div className="flex items-center">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        size={20}
+                        className={`${
+                          i < Math.floor(product.rating) 
+                            ? 'text-gold-500 fill-current' 
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-gray-600 ml-2">
+                    {product.rating} ({product.reviews || 0} reviews)
+                  </span>
                 </div>
-                <span className="text-gray-600 ml-2">
-                  {product.rating} ({product.reviews} reviews)
-                </span>
-              </div>
+              )}
 
               <div className="flex items-center space-x-4 mb-6">
                 <span className="text-3xl font-bold text-gray-900">
                   ${product.price}
                 </span>
-                {product.onSale && (
+                {product.onSale && product.originalPrice && (
                   <span className="text-xl text-gray-500 line-through">
                     ${product.originalPrice}
                   </span>
@@ -219,60 +223,64 @@ const ProductDetail = () => {
             </div>
 
             {/* Color Selection */}
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Color</h3>
-              <div className="flex space-x-3">
-                {product.colors.map(color => (
-                  <motion.button
-                    key={color}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setSelectedColor(color)}
-                    className={`w-10 h-10 rounded-full border-2 ${
-                      selectedColor === color 
-                        ? 'border-gold-500 ring-2 ring-gold-200' 
-                        : 'border-gray-300'
-                    } ${
-                      color === 'black' ? 'bg-black' :
-                      color === 'white' ? 'bg-white' :
-                      color === 'navy' ? 'bg-blue-900' :
-                      color === 'blue' ? 'bg-blue-500' :
-                      color === 'pink' ? 'bg-pink-500' :
-                      color === 'gray' ? 'bg-gray-500' :
-                      color === 'green' ? 'bg-green-500' :
-                      color === 'burgundy' ? 'bg-red-800' :
-                      'bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500'
-                    }`}
-                  >
-                    {selectedColor === color && (
-                      <Check size={16} className={`mx-auto ${color === 'white' ? 'text-gray-900' : 'text-white'}`} />
-                    )}
-                  </motion.button>
-                ))}
+            {product.colors && product.colors.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Color</h3>
+                <div className="flex space-x-3">
+                  {product.colors.map(color => (
+                    <motion.button
+                      key={color}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setSelectedColor(color)}
+                      className={`w-10 h-10 rounded-full border-2 ${
+                        selectedColor === color 
+                          ? 'border-gold-500 ring-2 ring-gold-200' 
+                          : 'border-gray-300'
+                      } ${
+                        color === 'black' ? 'bg-black' :
+                        color === 'white' ? 'bg-white' :
+                        color === 'navy' ? 'bg-blue-900' :
+                        color === 'blue' ? 'bg-blue-500' :
+                        color === 'pink' ? 'bg-pink-500' :
+                        color === 'gray' ? 'bg-gray-500' :
+                        color === 'green' ? 'bg-green-500' :
+                        color === 'burgundy' ? 'bg-red-800' :
+                        'bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500'
+                      }`}
+                    >
+                      {selectedColor === color && (
+                        <Check size={16} className={`mx-auto ${color === 'white' ? 'text-gray-900' : 'text-white'}`} />
+                      )}
+                    </motion.button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Size Selection */}
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Size</h3>
-              <div className="grid grid-cols-5 gap-3">
-                {product.sizes.map(size => (
-                  <motion.button
-                    key={size}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setSelectedSize(size)}
-                    className={`py-2 px-4 border rounded-lg font-medium transition-colors ${
-                      selectedSize === size
-                        ? 'border-gold-500 bg-gold-50 text-gold-700'
-                        : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    {size}
-                  </motion.button>
-                ))}
+            {product.sizes && product.sizes.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Size</h3>
+                <div className="grid grid-cols-5 gap-3">
+                  {product.sizes.map(size => (
+                    <motion.button
+                      key={size}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setSelectedSize(size)}
+                      className={`py-2 px-4 border rounded-lg font-medium transition-colors ${
+                        selectedSize === size
+                          ? 'border-gold-500 bg-gold-50 text-gold-700'
+                          : 'border-gray-300 hover:border-gray-400'
+                      }`}
+                    >
+                      {size}
+                    </motion.button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Quantity */}
             <div>
@@ -290,13 +298,13 @@ const ProductDetail = () => {
                   <button
                     onClick={() => handleQuantityChange(1)}
                     className="p-2 hover:bg-gray-50"
-                    disabled={quantity >= product.inStock}
+                    disabled={quantity >= (product.inStock || 10)}
                   >
                     <Plus size={16} />
                   </button>
                 </div>
                 <span className="text-sm text-gray-600">
-                  {product.inStock} items available
+                  {product.inStock || 10} items available
                 </span>
               </div>
             </div>
@@ -387,15 +395,23 @@ const ProductDetail = () => {
           <div className="py-8">
             {activeTab === 'description' && (
               <div className="prose max-w-none">
-                <p className="text-gray-700 leading-relaxed">{product.description}</p>
+                <p className="text-gray-700 leading-relaxed">
+                  {product.description || 'This is a premium quality product designed with attention to detail and crafted from the finest materials. Perfect for any occasion, this item combines style, comfort, and durability.'}
+                </p>
               </div>
             )}
 
-            {activeTab === 'features' && product.features && (
+            {activeTab === 'features' && (
               <div>
                 <h3 className="text-lg font-semibold mb-4">Product Features</h3>
                 <ul className="space-y-2">
-                  {product.features.map((feature, index) => (
+                  {(product.features || [
+                    'Premium quality materials',
+                    'Comfortable fit',
+                    'Durable construction',
+                    'Easy care instructions',
+                    'Stylish design'
+                  ]).map((feature, index) => (
                     <li key={index} className="flex items-center">
                       <Check size={16} className="text-green-500 mr-2" />
                       <span className="text-gray-700">{feature}</span>
@@ -405,11 +421,17 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {activeTab === 'care' && product.careInstructions && (
+            {activeTab === 'care' && (
               <div>
                 <h3 className="text-lg font-semibold mb-4">Care Instructions</h3>
                 <ul className="space-y-2">
-                  {product.careInstructions.map((instruction, index) => (
+                  {(product.careInstructions || [
+                    'Machine wash cold with like colors',
+                    'Do not bleach',
+                    'Tumble dry low',
+                    'Iron on low heat if needed',
+                    'Do not dry clean'
+                  ]).map((instruction, index) => (
                     <li key={index} className="flex items-start">
                       <span className="text-gold-500 mr-2">•</span>
                       <span className="text-gray-700">{instruction}</span>
@@ -422,7 +444,10 @@ const ProductDetail = () => {
             {activeTab === 'reviews' && (
               <div>
                 <h3 className="text-lg font-semibold mb-4">Customer Reviews</h3>
-                <p className="text-gray-600">Reviews feature coming soon...</p>
+                <div className="text-center py-8">
+                  <Star size={48} className="mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-600">No reviews yet. Be the first to review this product!</p>
+                </div>
               </div>
             )}
           </div>

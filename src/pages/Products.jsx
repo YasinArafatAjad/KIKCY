@@ -10,7 +10,8 @@ import {
   Heart, 
   ShoppingCart,
   ChevronDown,
-  X
+  X,
+  Package
 } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { products, getProductsByCategory, searchProducts } from '../data/products';
@@ -24,7 +25,7 @@ const Products = () => {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('grid');
   const [showFilters, setShowFilters] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [sortBy, setSortBy] = useState('name');
   const [priceRange, setPriceRange] = useState([0, 500]);
   const [selectedSizes, setSelectedSizes] = useState([]);
@@ -62,14 +63,14 @@ const Products = () => {
     // Filter by sizes
     if (selectedSizes.length > 0) {
       filtered = filtered.filter(product => 
-        product.sizes.some(size => selectedSizes.includes(size))
+        product.sizes && product.sizes.some(size => selectedSizes.includes(size))
       );
     }
 
     // Filter by colors
     if (selectedColors.length > 0) {
       filtered = filtered.filter(product => 
-        product.colors.some(color => selectedColors.includes(color))
+        product.colors && product.colors.some(color => selectedColors.includes(color))
       );
     }
 
@@ -81,9 +82,9 @@ const Products = () => {
         case 'price-high':
           return b.price - a.price;
         case 'rating':
-          return b.rating - a.rating;
+          return (b.rating || 0) - (a.rating || 0);
         case 'newest':
-          return b.isNew - a.isNew;
+          return (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0);
         default:
           return a.name.localeCompare(b.name);
       }
@@ -106,8 +107,8 @@ const Products = () => {
       name: product.name,
       price: product.price,
       image: product.image,
-      size: product.sizes[0], // Default to first size
-      color: product.colors[0] // Default to first color
+      size: product.sizes ? product.sizes[0] : 'M', // Default to first size or M
+      color: product.colors ? product.colors[0] : 'Default' // Default to first color
     });
   };
 
@@ -120,7 +121,7 @@ const Products = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center pt-16">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
@@ -145,7 +146,7 @@ const Products = () => {
               {category ? `${category.charAt(0).toUpperCase() + category.slice(1)}'s Fashion` : 'All Products'}
             </h1>
             <p className="text-xl text-gray-300">
-              Discover our premium collection of stylish clothing
+              {searchTerm ? `Search results for "${searchTerm}"` : 'Discover our premium collection of stylish clothing'}
             </p>
           </motion.div>
         </div>
@@ -323,143 +324,173 @@ const Products = () => {
               Showing {filteredProducts.length} products
             </div>
 
-            <div className={`grid gap-6 ${
-              viewMode === 'grid' 
-                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-                : 'grid-cols-1'
-            }`}>
-              <AnimatePresence>
-                {filteredProducts.map((product, index) => (
-                  <motion.div
-                    key={product.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 20 }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                    className={`bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 group ${
-                      viewMode === 'list' ? 'flex' : ''
-                    }`}
-                  >
-                    <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : ''}`}>
-                      <Link to={`/product/${product.id}`}>
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${
-                            viewMode === 'list' ? 'h-48' : 'h-64'
-                          }`}
-                        />
-                      </Link>
-                      
-                      {/* Badges */}
-                      <div className="absolute top-2 left-2 flex flex-col gap-1">
-                        {product.isNew && (
-                          <span className="bg-emerald-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                            New
-                          </span>
-                        )}
-                        {product.onSale && (
-                          <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                            Sale
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Wishlist Button */}
-                      <button
-                        onClick={() => toggleWishlist(product.id)}
-                        className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                          wishlist.includes(product.id)
-                            ? 'bg-red-500 text-white'
-                            : 'bg-white/80 text-gray-600 hover:bg-white'
-                        }`}
-                      >
-                        <Heart size={16} className={wishlist.includes(product.id) ? 'fill-current' : ''} />
-                      </button>
-                    </div>
-
-                    <div className={`p-4 ${viewMode === 'list' ? 'flex-1' : ''}`}>
-                      <Link to={`/product/${product.id}`}>
-                        <h3 className="font-semibold text-lg mb-2 group-hover:text-gold-600 transition-colors">
-                          {product.name}
-                        </h3>
-                      </Link>
-                      
-                      <div className="flex items-center mb-2">
-                        <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              size={14}
-                              className={`${
-                                i < Math.floor(product.rating) 
-                                  ? 'text-gold-500 fill-current' 
-                                  : 'text-gray-300'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-sm text-gray-600 ml-2">
-                          ({product.reviews} reviews)
-                        </span>
-                      </div>
-
-                      <div className="flex items-center mb-3">
-                        <span className="text-xl font-bold text-primary-900">
-                          ${product.price}
-                        </span>
-                        {product.onSale && (
-                          <span className="text-sm text-gray-500 line-through ml-2">
-                            ${product.originalPrice}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Color Options */}
-                      <div className="flex items-center gap-2 mb-4">
-                        {product.colors.slice(0, 3).map(color => (
-                          <div
-                            key={color}
-                            className={`w-4 h-4 rounded-full border-2 border-gray-300 ${
-                              color === 'black' ? 'bg-black' :
-                              color === 'white' ? 'bg-white' :
-                              color === 'navy' ? 'bg-blue-900' :
-                              color === 'blue' ? 'bg-blue-500' :
-                              color === 'pink' ? 'bg-pink-500' :
-                              color === 'gray' ? 'bg-gray-500' :
-                              color === 'green' ? 'bg-green-500' :
-                              color === 'burgundy' ? 'bg-red-800' :
-                              'bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500'
-                            }`}
-                          />
-                        ))}
-                        {product.colors.length > 3 && (
-                          <span className="text-xs text-gray-500">
-                            +{product.colors.length - 3} more
-                          </span>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={() => handleAddToCart(product)}
-                        className="w-full bg-primary-900 text-white py-2 px-4 rounded-lg hover:bg-primary-800 transition-colors flex items-center justify-center group"
-                      >
-                        <ShoppingCart size={18} className="mr-2 group-hover:animate-bounce" />
-                        Add to Cart
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-
-            {filteredProducts.length === 0 && (
+            {filteredProducts.length === 0 ? (
               <div className="text-center py-16">
                 <div className="text-gray-400 mb-4">
-                  <Search size={64} className="mx-auto" />
+                  <Package size={64} className="mx-auto" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-600 mb-2">No products found</h3>
-                <p className="text-gray-500">Try adjusting your filters or search terms</p>
+                <p className="text-gray-500 mb-6">
+                  {searchTerm || selectedSizes.length > 0 || selectedColors.length > 0 
+                    ? 'Try adjusting your filters or search terms' 
+                    : 'We\'re working on adding products to our catalog. Check back soon!'}
+                </p>
+                <div className="space-y-4">
+                  <Link
+                    to="/products"
+                    className="inline-block px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                  >
+                    Browse All Categories
+                  </Link>
+                  <div className="text-sm text-gray-500">
+                    Or explore our categories:
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <Link to="/products/men" className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                      Men's Fashion
+                    </Link>
+                    <Link to="/products/women" className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                      Women's Wear
+                    </Link>
+                    <Link to="/products/kids" className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                      Kids' Clothing
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className={`grid gap-6 ${
+                viewMode === 'grid' 
+                  ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+                  : 'grid-cols-1'
+              }`}>
+                <AnimatePresence>
+                  {filteredProducts.map((product, index) => (
+                    <motion.div
+                      key={product.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 20 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      className={`bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 group ${
+                        viewMode === 'list' ? 'flex' : ''
+                      }`}
+                    >
+                      <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : ''}`}>
+                        <Link to={`/product/${product.id}`}>
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${
+                              viewMode === 'list' ? 'h-48' : 'h-64'
+                            }`}
+                          />
+                        </Link>
+                        
+                        {/* Badges */}
+                        <div className="absolute top-2 left-2 flex flex-col gap-1">
+                          {product.isNew && (
+                            <span className="bg-emerald-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                              New
+                            </span>
+                          )}
+                          {product.onSale && (
+                            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                              Sale
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Wishlist Button */}
+                        <button
+                          onClick={() => toggleWishlist(product.id)}
+                          className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                            wishlist.includes(product.id)
+                              ? 'bg-red-500 text-white'
+                              : 'bg-white/80 text-gray-600 hover:bg-white'
+                          }`}
+                        >
+                          <Heart size={16} className={wishlist.includes(product.id) ? 'fill-current' : ''} />
+                        </button>
+                      </div>
+
+                      <div className={`p-4 ${viewMode === 'list' ? 'flex-1' : ''}`}>
+                        <Link to={`/product/${product.id}`}>
+                          <h3 className="font-semibold text-lg mb-2 group-hover:text-gold-600 transition-colors">
+                            {product.name}
+                          </h3>
+                        </Link>
+                        
+                        {product.rating && (
+                          <div className="flex items-center mb-2">
+                            <div className="flex items-center">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  size={14}
+                                  className={`${
+                                    i < Math.floor(product.rating) 
+                                      ? 'text-gold-500 fill-current' 
+                                      : 'text-gray-300'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-sm text-gray-600 ml-2">
+                              ({product.reviews || 0} reviews)
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="flex items-center mb-3">
+                          <span className="text-xl font-bold text-primary-900">
+                            ${product.price}
+                          </span>
+                          {product.onSale && product.originalPrice && (
+                            <span className="text-sm text-gray-500 line-through ml-2">
+                              ${product.originalPrice}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Color Options */}
+                        {product.colors && (
+                          <div className="flex items-center gap-2 mb-4">
+                            {product.colors.slice(0, 3).map(color => (
+                              <div
+                                key={color}
+                                className={`w-4 h-4 rounded-full border-2 border-gray-300 ${
+                                  color === 'black' ? 'bg-black' :
+                                  color === 'white' ? 'bg-white' :
+                                  color === 'navy' ? 'bg-blue-900' :
+                                  color === 'blue' ? 'bg-blue-500' :
+                                  color === 'pink' ? 'bg-pink-500' :
+                                  color === 'gray' ? 'bg-gray-500' :
+                                  color === 'green' ? 'bg-green-500' :
+                                  color === 'burgundy' ? 'bg-red-800' :
+                                  'bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500'
+                                }`}
+                              />
+                            ))}
+                            {product.colors.length > 3 && (
+                              <span className="text-xs text-gray-500">
+                                +{product.colors.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        <button
+                          onClick={() => handleAddToCart(product)}
+                          className="w-full bg-primary-900 text-white py-2 px-4 rounded-lg hover:bg-primary-800 transition-colors flex items-center justify-center group"
+                        >
+                          <ShoppingCart size={18} className="mr-2 group-hover:animate-bounce" />
+                          Add to Cart
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               </div>
             )}
           </div>
