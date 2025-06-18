@@ -29,6 +29,9 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Check if we're on the home page
+  const isHomePage = location.pathname === '/';
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -77,14 +80,60 @@ const Navbar = () => {
     return location.pathname.startsWith(path);
   };
 
+  // Determine navbar background based on page and scroll state
+  const getNavbarBackground = () => {
+    if (isHomePage) {
+      return isScrolled 
+        ? 'bg-white/95 backdrop-blur-md shadow-lg' 
+        : 'bg-transparent';
+    } else {
+      return 'bg-white shadow-lg';
+    }
+  };
+
+  // Determine text colors based on page and scroll state
+  const getTextColor = (isActive = false) => {
+    if (isHomePage && !isScrolled) {
+      // On home page when not scrolled (transparent navbar)
+      if (isActive) {
+        return 'text-gold-400 border-b-2 border-gold-400';
+      }
+      return 'text-white/90 hover:text-gold-400';
+    } else {
+      // On other pages or when scrolled (white navbar)
+      if (isActive) {
+        return 'text-gold-600 border-b-2 border-gold-600';
+      }
+      return 'text-primary-700 hover:text-gold-600';
+    }
+  };
+
+  const getLogoColor = () => {
+    return (isHomePage && !isScrolled) ? 'text-white' : 'text-primary-900';
+  };
+
+  const getIconColor = () => {
+    return (isHomePage && !isScrolled) 
+      ? 'text-white hover:bg-white/10' 
+      : 'text-primary-700 hover:bg-primary-100';
+  };
+
+  const getButtonStyle = () => {
+    return (isHomePage && !isScrolled)
+      ? 'bg-white text-primary-900 hover:bg-white/90'
+      : 'bg-primary-900 text-white hover:bg-primary-800';
+  };
+
+  const getMobileMenuIconColor = () => {
+    return (isHomePage && !isScrolled) 
+      ? 'text-white hover:bg-white/10' 
+      : 'text-primary-700 hover:bg-primary-100';
+  };
+
   return (
     <>
       <motion.nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled 
-            ? 'bg-white/95 backdrop-blur-md shadow-lg' 
-            : 'bg-transparent'
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${getNavbarBackground()}`}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6 }}
@@ -99,9 +148,7 @@ const Navbar = () => {
             >
               <Link 
                 to="/" 
-                className={`text-2xl font-bold font-display ${
-                  isScrolled ? 'text-primary-900' : 'text-white'
-                }`}
+                className={`text-2xl font-bold font-display ${getLogoColor()}`}
               >
                 KICKY
               </Link>
@@ -115,13 +162,7 @@ const Navbar = () => {
                     <Link
                       to={link.path}
                       className={`px-3 py-2 text-sm font-medium transition-colors duration-200 ${
-                        isActivePath(link.path)
-                          ? isScrolled 
-                            ? 'text-gold-600 border-b-2 border-gold-600' 
-                            : 'text-gold-400 border-b-2 border-gold-400'
-                          : isScrolled
-                            ? 'text-primary-700 hover:text-gold-600'
-                            : 'text-white/90 hover:text-gold-400'
+                        getTextColor(isActivePath(link.path))
                       }`}
                     >
                       {link.name}
@@ -138,11 +179,7 @@ const Navbar = () => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setShowSearch(!showSearch)}
-                className={`p-2 rounded-full transition-colors ${
-                  isScrolled 
-                    ? 'text-primary-700 hover:bg-primary-100' 
-                    : 'text-white hover:bg-white/10'
-                }`}
+                className={`p-2 rounded-full transition-colors ${getIconColor()}`}
               >
                 <Search size={20} />
               </motion.button>
@@ -152,11 +189,7 @@ const Navbar = () => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={toggleCart}
-                className={`relative p-2 rounded-full transition-colors ${
-                  isScrolled 
-                    ? 'text-primary-700 hover:bg-primary-100' 
-                    : 'text-white hover:bg-white/10'
-                }`}
+                className={`relative p-2 rounded-full transition-colors ${getIconColor()}`}
               >
                 <ShoppingCart size={20} />
                 {getCartItemsCount() > 0 && (
@@ -177,11 +210,7 @@ const Navbar = () => {
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setShowUserMenu(!showUserMenu)}
-                    className={`p-2 rounded-full transition-colors ${
-                      isScrolled 
-                        ? 'text-primary-700 hover:bg-primary-100' 
-                        : 'text-white hover:bg-white/10'
-                    }`}
+                    className={`p-2 rounded-full transition-colors ${getIconColor()}`}
                   >
                     <User size={20} />
                   </motion.button>
@@ -239,11 +268,7 @@ const Navbar = () => {
                 >
                   <Link
                     to="/login"
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                      isScrolled
-                        ? 'bg-primary-900 text-white hover:bg-primary-800'
-                        : 'bg-white text-primary-900 hover:bg-white/90'
-                    }`}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${getButtonStyle()}`}
                   >
                     Login
                   </Link>
@@ -256,11 +281,7 @@ const Navbar = () => {
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsOpen(!isOpen)}
-                className={`p-2 rounded-md ${
-                  isScrolled 
-                    ? 'text-primary-700 hover:bg-primary-100' 
-                    : 'text-white hover:bg-white/10'
-                }`}
+                className={`p-2 rounded-md ${getMobileMenuIconColor()}`}
               >
                 {isOpen ? <X size={24} /> : <Menu size={24} />}
               </motion.button>
