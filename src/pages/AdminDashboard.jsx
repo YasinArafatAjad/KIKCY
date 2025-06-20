@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import  useNavigate  from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { 
   Users, 
@@ -24,8 +24,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { collection, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
-const navigate = useNavigate();
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -602,11 +602,32 @@ const AdminDashboard = () => {
             </motion.div>
           )}
           {activeTab === 'analytics' && (
-          navigate('/analytics')
-          )};
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-16"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Analytics</h2>
+                <p className="text-gray-600 mb-4">Navigate to analytics page</p>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigate('/analytics')}
+                  className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  Go to Analytics
+                </motion.button>
+              </motion.div>
+            </motion.div>
+          )}
 
           {/* Other tabs would be implemented similarly */}
-          {(activeTab !== 'overview' && activeTab !== 'users') && (
+          {(activeTab !== 'overview' && activeTab !== 'users' && activeTab !== 'analytics') && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
