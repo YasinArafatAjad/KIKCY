@@ -57,7 +57,9 @@ function AppContent() {
       <AuthNavigationHandler />
       
       {/* Analytics Tracking */}
-      <GoogleAnalytics measurementId="GA_MEASUREMENT_ID" />
+      <GoogleAnalytics measurementId="G-LHPMN5R02J
+
+" />
       <FacebookPixel pixelId="FB_PIXEL_ID" />
       
       <Navbar />
