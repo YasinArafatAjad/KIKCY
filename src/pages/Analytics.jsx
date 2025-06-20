@@ -8,7 +8,11 @@ import {
   Search,
   ExternalLink,
   Calendar,
-  Filter
+  Filter,
+  Instagram,
+  Twitter,
+  Youtube,
+  RefreshCw
 } from 'lucide-react';
 import { analytics } from '../utils/analytics';
 
@@ -22,6 +26,7 @@ const Analytics = () => {
   });
   const [dateRange, setDateRange] = useState('7d');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchAnalyticsData();
@@ -30,68 +35,59 @@ const Analytics = () => {
   const fetchAnalyticsData = async () => {
     try {
       setLoading(true);
-      // In a real app, this would fetch from your analytics API
-      // For demo purposes, we'll use mock data
-      const mockData = {
-        totalVisitors: 1247,
+      setError(null);
+      
+      // Get real referrer data from our analytics system
+      const referrerData = analytics.getAttributionReport();
+      
+      // In a real implementation, you would fetch data from your backend
+      // For now, we'll show the current session data and some basic metrics
+      const realData = {
+        totalVisitors: 1, // Current session
         trafficSources: {
-          'direct': 425,
-          'google': 312,
-          'instagram': 156,
-          'twitter': 89,
-          'referral': 67
+          [referrerData.trafficSource || 'direct']: 1
         },
-        topReferrers: [
-          { domain: 'google.com', visitors: 312, percentage: 25.0 },
-          { domain: 'instagram.com', visitors: 156, percentage: 12.5 },
-          { domain: 'twitter.com', visitors: 89, percentage: 7.1 },
-          { domain: 'pinterest.com', visitors: 45, percentage: 3.6 }
-        ],
-        conversionsBySource: {
-          'google': { conversions: 23, value: 2340 },
-          'direct': { conversions: 31, value: 3100 },
-          'instagram': { conversions: 12, value: 1200 }
-        },
-        recentVisitors: [
-          { 
-            id: 1, 
-            source: 'google', 
-            landingPage: '/products/men', 
-            timestamp: '2024-01-15T10:30:00Z',
-            converted: true,
-            value: 89.99
-          },
-          { 
-            id: 2, 
-            source: 'direct', 
-            landingPage: '/', 
-            timestamp: '2024-01-15T10:25:00Z',
-            converted: false,
-            value: 0
-          },
-          { 
-            id: 3, 
-            source: 'instagram', 
-            landingPage: '/products/women', 
-            timestamp: '2024-01-15T10:20:00Z',
-            converted: true,
-            value: 156.50
-          }
-        ]
+        topReferrers: referrerData.referrer && referrerData.referrer !== 'direct' 
+          ? [{ 
+              domain: new URL(referrerData.referrer).hostname, 
+              visitors: 1, 
+              percentage: 100.0 
+            }]
+          : [],
+        conversionsBySource: {},
+        recentVisitors: [{
+          id: 1,
+          source: referrerData.trafficSource || 'direct',
+          landingPage: referrerData.landingPage || window.location.href,
+          timestamp: referrerData.timestamp || new Date().toISOString(),
+          converted: false,
+          value: 0,
+          utmCampaign: referrerData.utmCampaign,
+          utmMedium: referrerData.utmMedium,
+          utmSource: referrerData.utmSource
+        }]
       };
       
-      setAnalyticsData(mockData);
+      setAnalyticsData(realData);
     } catch (error) {
       console.error('Error fetching analytics data:', error);
+      setError('Failed to load analytics data. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const getSourceIcon = (source) => {
-    switch (source.toLowerCase()) {
+    switch (source?.toLowerCase()) {
       case 'google':
         return <Search size={20} className="text-red-500" />;
+      case 'instagram':
+        return <Instagram size={20} className="text-pink-500" />;
+      case 'twitter':
+      case 'x':
+        return <Twitter size={20} className="text-blue-400" />;
+      case 'youtube':
+        return <Youtube size={20} className="text-red-600" />;
       case 'direct':
         return <Globe size={20} className="text-gray-600" />;
       case 'referral':
@@ -115,6 +111,27 @@ const Analytics = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-16 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 mb-4">
+            <BarChart3 size={64} className="mx-auto" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Analytics Error</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={fetchAnalyticsData}
+            className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center mx-auto"
+          >
+            <RefreshCw size={20} className="mr-2" />
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -126,7 +143,7 @@ const Analytics = () => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Traffic Analytics</h1>
-              <p className="text-gray-600">Track where your visitors are coming from</p>
+              <p className="text-gray-600">Real-time visitor tracking and analytics</p>
             </div>
             
             <div className="flex items-center space-x-4">
@@ -140,6 +157,36 @@ const Analytics = () => {
                 <option value="30d">Last 30 days</option>
                 <option value="90d">Last 90 days</option>
               </select>
+              
+              <button
+                onClick={fetchAnalyticsData}
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center"
+              >
+                <RefreshCw size={16} className="mr-2" />
+                Refresh
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Notice about data collection */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 bg-blue-50 border border-blue-200 rounded-lg p-4"
+        >
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <BarChart3 className="h-5 w-5 text-blue-400" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-blue-800">Analytics Data Collection</h3>
+              <div className="mt-2 text-sm text-blue-700">
+                <p>
+                  This page shows real analytics data from your current session. In a production environment, 
+                  this would display comprehensive data from Google Analytics and your backend analytics system.
+                </p>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -157,8 +204,8 @@ const Analytics = () => {
                 <Users size={24} className="text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Visitors</p>
-                <p className="text-2xl font-bold text-gray-900">{totalVisitors.toLocaleString()}</p>
+                <p className="text-sm font-medium text-gray-600">Current Session</p>
+                <p className="text-2xl font-bold text-gray-900">{totalVisitors}</p>
               </div>
             </div>
           </motion.div>
@@ -174,8 +221,8 @@ const Analytics = () => {
                 <TrendingUp size={24} className="text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Conversion Rate</p>
-                <p className="text-2xl font-bold text-gray-900">3.2%</p>
+                <p className="text-sm font-medium text-gray-600">Bounce Rate</p>
+                <p className="text-2xl font-bold text-gray-900">--</p>
               </div>
             </div>
           </motion.div>
@@ -208,8 +255,8 @@ const Analytics = () => {
                 <BarChart3 size={24} className="text-yellow-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">$6,640</p>
+                <p className="text-sm font-medium text-gray-600">Page Views</p>
+                <p className="text-2xl font-bold text-gray-900">1</p>
               </div>
             </div>
           </motion.div>
@@ -225,29 +272,36 @@ const Analytics = () => {
           >
             <h2 className="text-lg font-semibold text-gray-900 mb-6">Traffic Sources</h2>
             
-            <div className="space-y-4">
-              {Object.entries(analyticsData.trafficSources).map(([source, count]) => {
-                const percentage = ((count / totalVisitors) * 100).toFixed(1);
-                return (
-                  <div key={source} className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      {getSourceIcon(source)}
-                      <span className="ml-3 font-medium text-gray-900 capitalize">{source}</span>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="w-24 bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-primary-600 h-2 rounded-full" 
-                          style={{ width: `${percentage}%` }}
-                        />
+            {Object.keys(analyticsData.trafficSources).length > 0 ? (
+              <div className="space-y-4">
+                {Object.entries(analyticsData.trafficSources).map(([source, count]) => {
+                  const percentage = totalVisitors > 0 ? ((count / totalVisitors) * 100).toFixed(1) : 0;
+                  return (
+                    <div key={source} className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        {getSourceIcon(source)}
+                        <span className="ml-3 font-medium text-gray-900 capitalize">{source}</span>
                       </div>
-                      <span className="text-sm text-gray-600 w-12 text-right">{percentage}%</span>
-                      <span className="text-sm font-medium text-gray-900 w-16 text-right">{count}</span>
+                      <div className="flex items-center space-x-4">
+                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-primary-600 h-2 rounded-full" 
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-sm text-gray-600 w-12 text-right">{percentage}%</span>
+                        <span className="text-sm font-medium text-gray-900 w-16 text-right">{count}</span>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Globe size={48} className="mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-600">No traffic data available yet</p>
+              </div>
+            )}
           </motion.div>
 
           {/* Top Referrers */}
@@ -259,78 +313,40 @@ const Analytics = () => {
           >
             <h2 className="text-lg font-semibold text-gray-900 mb-6">Top Referrers</h2>
             
-            <div className="space-y-4">
-              {analyticsData.topReferrers.map((referrer, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                      <span className="text-xs font-medium text-gray-600">{index + 1}</span>
+            {analyticsData.topReferrers.length > 0 ? (
+              <div className="space-y-4">
+                {analyticsData.topReferrers.map((referrer, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                        <span className="text-xs font-medium text-gray-600">{index + 1}</span>
+                      </div>
+                      <span className="ml-3 font-medium text-gray-900">{referrer.domain}</span>
                     </div>
-                    <span className="ml-3 font-medium text-gray-900">{referrer.domain}</span>
+                    <div className="flex items-center space-x-4">
+                      <span className="text-sm text-gray-600">{referrer.percentage}%</span>
+                      <span className="text-sm font-medium text-gray-900">{referrer.visitors}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-4">
-                    <span className="text-sm text-gray-600">{referrer.percentage}%</span>
-                    <span className="text-sm font-medium text-gray-900">{referrer.visitors}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <ExternalLink size={48} className="mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-600">No referrer data available</p>
+              </div>
+            )}
           </motion.div>
         </div>
 
-        {/* Conversions by Source */}
+        {/* Recent Visitors */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
           className="mt-8 bg-white rounded-lg shadow-sm p-6"
         >
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Conversions by Source</h2>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Source</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Visitors</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Conversions</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Conversion Rate</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Revenue</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(analyticsData.conversionsBySource).map(([source, data]) => {
-                  const visitors = analyticsData.trafficSources[source] || 0;
-                  const conversionRate = visitors > 0 ? ((data.conversions / visitors) * 100).toFixed(1) : '0.0';
-                  
-                  return (
-                    <tr key={source} className="border-b border-gray-100">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          {getSourceIcon(source)}
-                          <span className="ml-3 font-medium text-gray-900 capitalize">{source}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-gray-600">{visitors}</td>
-                      <td className="py-3 px-4 text-gray-600">{data.conversions}</td>
-                      <td className="py-3 px-4 text-gray-600">{conversionRate}%</td>
-                      <td className="py-3 px-4 font-medium text-gray-900">${data.value}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </motion.div>
-
-        {/* Recent Visitors */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          className="mt-8 bg-white rounded-lg shadow-sm p-6"
-        >
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Recent Visitors</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">Current Session Details</h2>
           
           <div className="space-y-4">
             {analyticsData.recentVisitors.map((visitor) => (
@@ -338,25 +354,48 @@ const Analytics = () => {
                 <div className="flex items-center space-x-4">
                   {getSourceIcon(visitor.source)}
                   <div>
-                    <p className="font-medium text-gray-900 capitalize">{visitor.source}</p>
+                    <p className="font-medium text-gray-900 capitalize">
+                      {visitor.source}
+                      {visitor.utmCampaign && (
+                        <span className="ml-2 text-sm text-blue-600">
+                          Campaign: {visitor.utmCampaign}
+                        </span>
+                      )}
+                    </p>
                     <p className="text-sm text-gray-600">{visitor.landingPage}</p>
+                    {visitor.utmMedium && (
+                      <p className="text-xs text-gray-500">Medium: {visitor.utmMedium}</p>
+                    )}
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-gray-600">
-                    {new Date(visitor.timestamp).toLocaleTimeString()}
+                    {new Date(visitor.timestamp).toLocaleString()}
                   </p>
-                  {visitor.converted ? (
-                    <p className="text-sm font-medium text-green-600">
-                      Converted: ${visitor.value}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-gray-500">No conversion</p>
-                  )}
+                  <p className="text-sm text-gray-500">Active session</p>
                 </div>
               </div>
             ))}
           </div>
+        </motion.div>
+
+        {/* Integration Notice */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6"
+        >
+          <h3 className="text-lg font-semibold text-yellow-800 mb-2">Production Integration</h3>
+          <p className="text-yellow-700 mb-4">
+            To see comprehensive analytics data in production, you'll need to:
+          </p>
+          <ul className="list-disc list-inside text-yellow-700 space-y-1">
+            <li>Set up Google Analytics 4 with your measurement ID</li>
+            <li>Implement backend analytics collection</li>
+            <li>Configure conversion tracking</li>
+            <li>Set up automated reporting</li>
+          </ul>
         </motion.div>
       </div>
     </div>

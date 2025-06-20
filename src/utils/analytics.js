@@ -4,6 +4,8 @@ export class AnalyticsTracker {
     this.sessionId = this.generateSessionId();
     this.userId = null;
     this.referrerData = this.captureReferrerData();
+    this.pageViews = [];
+    this.events = [];
   }
 
   generateSessionId() {
@@ -40,7 +42,8 @@ export class AnalyticsTracker {
       timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
       screenResolution: `${screen.width}x${screen.height}`,
-      language: navigator.language
+      language: navigator.language,
+      sessionId: this.sessionId
     };
 
     // Store in localStorage for persistence
@@ -123,6 +126,10 @@ export class AnalyticsTracker {
       ...additionalData
     };
 
+    // Store locally for analytics dashboard
+    this.pageViews.push(pageViewData);
+    this.updateLocalStorage();
+
     this.sendAnalyticsEvent('page_view', pageViewData);
   }
 
@@ -136,6 +143,10 @@ export class AnalyticsTracker {
       referrerData: this.referrerData,
       ...eventData
     };
+
+    // Store locally for analytics dashboard
+    this.events.push(trackingData);
+    this.updateLocalStorage();
 
     this.sendAnalyticsEvent('custom_event', trackingData);
   }
@@ -158,29 +169,61 @@ export class AnalyticsTracker {
   // Set user ID when user logs in
   setUserId(userId) {
     this.userId = userId;
+    this.updateLocalStorage();
   }
 
-  // Send data to your analytics endpoint
+  // Update localStorage with current session data
+  updateLocalStorage() {
+    const sessionData = {
+      sessionId: this.sessionId,
+      userId: this.userId,
+      referrerData: this.referrerData,
+      pageViews: this.pageViews,
+      events: this.events,
+      lastUpdated: new Date().toISOString()
+    };
+    
+    localStorage.setItem('analyticsSession', JSON.stringify(sessionData));
+  }
+
+  // Get session analytics data
+  getSessionData() {
+    const stored = localStorage.getItem('analyticsSession');
+    if (stored) {
+      return JSON.parse(stored);
+    }
+    return {
+      sessionId: this.sessionId,
+      userId: this.userId,
+      referrerData: this.referrerData,
+      pageViews: this.pageViews,
+      events: this.events
+    };
+  }
+
+  // Send data to analytics endpoints
   async sendAnalyticsEvent(eventType, data) {
     try {
-      // Send to your backend analytics endpoint
-      await fetch('/api/analytics', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          eventType,
-          data
-        })
-      });
-
       // Send to Google Analytics if configured
       if (window.gtag) {
         window.gtag('event', eventType, {
+          event_category: 'engagement',
+          event_label: data.pageName || data.eventName,
           custom_parameter: JSON.stringify(data)
         });
       }
+
+      // In production, you would also send to your backend
+      // await fetch('/api/analytics', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     eventType,
+      //     data
+      //   })
+      // });
 
     } catch (error) {
       console.error('Analytics tracking error:', error);
@@ -191,6 +234,37 @@ export class AnalyticsTracker {
   getAttributionReport() {
     const storedData = localStorage.getItem('referrerData');
     return storedData ? JSON.parse(storedData) : this.referrerData;
+  }
+
+  // Get analytics summary for dashboard
+  getAnalyticsSummary() {
+    const sessionData = this.getSessionData();
+    
+    return {
+      totalPageViews: sessionData.pageViews.length,
+      totalEvents: sessionData.events.length,
+      sessionDuration: this.getSessionDuration(),
+      trafficSource: sessionData.referrerData.trafficSource,
+      referrer: sessionData.referrerData.referrer,
+      utmData: {
+        source: sessionData.referrerData.utmSource,
+        medium: sessionData.referrerData.utmMedium,
+        campaign: sessionData.referrerData.utmCampaign
+      }
+    };
+  }
+
+  // Calculate session duration
+  getSessionDuration() {
+    const sessionData = this.getSessionData();
+    if (sessionData.pageViews.length === 0) return 0;
+    
+    const firstView = new Date(sessionData.pageViews[0].timestamp);
+    const lastView = sessionData.pageViews.length > 1 
+      ? new Date(sessionData.pageViews[sessionData.pageViews.length - 1].timestamp)
+      : new Date();
+    
+    return Math.round((lastView - firstView) / 1000); // Duration in seconds
   }
 }
 
