@@ -24,6 +24,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { collection, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
+const navigate = useNavigate();
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [users, setUsers] = useState([]);
@@ -171,7 +172,7 @@ const AdminDashboard = () => {
       </div>
     );
   }
-   const navigate = useNavigate();
+   
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
