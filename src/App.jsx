@@ -3,6 +3,9 @@ import { Routes, Route, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
+import { AnalyticsProvider } from './components/AnalyticsProvider';
+import GoogleAnalytics from './components/GoogleAnalytics';
+import FacebookPixel from './components/FacebookPixel';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -20,6 +23,7 @@ import Orders from './pages/Orders';
 import Wishlist from './pages/Wishlist';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import Analytics from './pages/Analytics';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Component to handle role-based navigation after login
@@ -51,6 +55,11 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       <AuthNavigationHandler />
+      
+      {/* Analytics Tracking */}
+      <GoogleAnalytics measurementId="GA_MEASUREMENT_ID" />
+      <FacebookPixel pixelId="FB_PIXEL_ID" />
+      
       <Navbar />
       <motion.main
         initial={{ opacity: 0 }}
@@ -97,6 +106,11 @@ function AppContent() {
               <AdminDashboard />
             </ProtectedRoute>
           } />
+          <Route path="/analytics" element={
+            <ProtectedRoute requiredRole={['admin', 'moderator']}>
+              <Analytics />
+            </ProtectedRoute>
+          } />
           
           {/* Moderator Routes */}
           <Route path="/moderator" element={
@@ -115,7 +129,9 @@ function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <AppContent />
+        <AnalyticsProvider>
+          <AppContent />
+        </AnalyticsProvider>
       </CartProvider>
     </AuthProvider>
   );
