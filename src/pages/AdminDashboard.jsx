@@ -599,7 +599,7 @@ const AdminDashboard = () => {
           )}
           {activeTab === 'analytics' && (
           navigate('/analytics')
-          );
+          )};
 
           {/* Other tabs would be implemented similarly */}
           {(activeTab !== 'overview' && activeTab !== 'users') && (
