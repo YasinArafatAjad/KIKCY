@@ -5,7 +5,6 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { AnalyticsProvider } from './components/AnalyticsProvider';
 import GoogleAnalytics from './components/GoogleAnalytics';
-import FacebookPixel from './components/FacebookPixel';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -57,10 +56,7 @@ function AppContent() {
       <AuthNavigationHandler />
       
       {/* Analytics Tracking */}
-      <GoogleAnalytics measurementId="G-LHPMN5R02J
-
-" />
-      <FacebookPixel pixelId="FB_PIXEL_ID" />
+      <GoogleAnalytics measurementId="G-LHPMN5R02J" />
       
       <Navbar />
       <motion.main

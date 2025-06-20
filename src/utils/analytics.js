@@ -21,14 +21,11 @@ export class AnalyticsTracker {
     const utmTerm = urlParams.get('utm_term');
     const utmContent = urlParams.get('utm_content');
     
-    // Get Facebook click ID
-    const fbclid = urlParams.get('fbclid');
-    
     // Get Google click ID
     const gclid = urlParams.get('gclid');
     
     // Determine traffic source
-    const trafficSource = this.determineTrafficSource(referrer, utmSource, fbclid, gclid);
+    const trafficSource = this.determineTrafficSource(referrer, utmSource, gclid);
     
     const referrerData = {
       referrer: referrer || 'direct',
@@ -38,7 +35,6 @@ export class AnalyticsTracker {
       utmCampaign,
       utmTerm,
       utmContent,
-      fbclid,
       gclid,
       landingPage: window.location.href,
       timestamp: new Date().toISOString(),
@@ -53,7 +49,7 @@ export class AnalyticsTracker {
     return referrerData;
   }
 
-  determineTrafficSource(referrer, utmSource, fbclid, gclid) {
+  determineTrafficSource(referrer, utmSource, gclid) {
     // Direct traffic
     if (!referrer && !utmSource) {
       return 'direct';
@@ -62,11 +58,6 @@ export class AnalyticsTracker {
     // UTM source takes priority
     if (utmSource) {
       return utmSource.toLowerCase();
-    }
-
-    // Facebook traffic
-    if (fbclid || (referrer && referrer.includes('facebook.com'))) {
-      return 'facebook';
     }
 
     // Google traffic
@@ -79,6 +70,7 @@ export class AnalyticsTracker {
       const domain = new URL(referrer).hostname.toLowerCase();
       
       const socialPlatforms = {
+        'facebook.com': 'facebook',
         'instagram.com': 'instagram',
         'twitter.com': 'twitter',
         'x.com': 'twitter',
@@ -183,16 +175,11 @@ export class AnalyticsTracker {
         })
       });
 
-      // Also send to Google Analytics if configured
+      // Send to Google Analytics if configured
       if (window.gtag) {
         window.gtag('event', eventType, {
           custom_parameter: JSON.stringify(data)
         });
-      }
-
-      // Send to Facebook Pixel if configured
-      if (window.fbq) {
-        window.fbq('track', eventType, data);
       }
 
     } catch (error) {
