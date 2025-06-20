@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect } from 'react';
 import { analytics } from '../utils/analytics';
-import { useAuth } from './AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { useLocation } from 'react-router-dom';
 
 const AnalyticsContext = createContext();
