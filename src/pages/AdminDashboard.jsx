@@ -154,6 +154,7 @@ const AdminDashboard = () => {
     { id: 'users', label: 'User Management', icon: Users },
     { id: 'orders', label: 'Orders', icon: ShoppingBag },
     { id: 'products', label: 'Products', icon: Package },
+    { id: 'analytics', label: 'Analytics', icon: Settings },
     { id: 'settings', label: 'Settings', icon: Settings }
   ];
 
