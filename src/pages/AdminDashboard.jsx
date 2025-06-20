@@ -148,13 +148,12 @@ const AdminDashboard = () => {
       color: 'bg-purple-500' 
     }
   ];
-
+ 
   const sidebarItems = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
     { id: 'users', label: 'User Management', icon: Users },
     { id: 'orders', label: 'Orders', icon: ShoppingBag },
     { id: 'products', label: 'Products', icon: Package },
-    { id: 'analytics', label: 'Analytics', icon: Settings },
     { id: 'settings', label: 'Settings', icon: Settings }
   ];
 
