@@ -169,6 +169,7 @@ const AdminDashboard = () => {
       </div>
     );
   }
+   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
