@@ -5,7 +5,6 @@ import {
   Users, 
   Globe, 
   TrendingUp,
-  Facebook,
   Search,
   ExternalLink,
   Calendar,
@@ -38,21 +37,18 @@ const Analytics = () => {
         trafficSources: {
           'direct': 425,
           'google': 312,
-          'facebook': 198,
           'instagram': 156,
           'twitter': 89,
           'referral': 67
         },
         topReferrers: [
           { domain: 'google.com', visitors: 312, percentage: 25.0 },
-          { domain: 'facebook.com', visitors: 198, percentage: 15.9 },
           { domain: 'instagram.com', visitors: 156, percentage: 12.5 },
           { domain: 'twitter.com', visitors: 89, percentage: 7.1 },
           { domain: 'pinterest.com', visitors: 45, percentage: 3.6 }
         ],
         conversionsBySource: {
           'google': { conversions: 23, value: 2340 },
-          'facebook': { conversions: 18, value: 1890 },
           'direct': { conversions: 31, value: 3100 },
           'instagram': { conversions: 12, value: 1200 }
         },
@@ -67,7 +63,7 @@ const Analytics = () => {
           },
           { 
             id: 2, 
-            source: 'facebook', 
+            source: 'direct', 
             landingPage: '/', 
             timestamp: '2024-01-15T10:25:00Z',
             converted: false,
@@ -75,7 +71,7 @@ const Analytics = () => {
           },
           { 
             id: 3, 
-            source: 'direct', 
+            source: 'instagram', 
             landingPage: '/products/women', 
             timestamp: '2024-01-15T10:20:00Z',
             converted: true,
@@ -94,8 +90,6 @@ const Analytics = () => {
 
   const getSourceIcon = (source) => {
     switch (source.toLowerCase()) {
-      case 'facebook':
-        return <Facebook size={20} className="text-blue-600" />;
       case 'google':
         return <Search size={20} className="text-red-500" />;
       case 'direct':
@@ -215,7 +209,7 @@ const Analytics = () => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">$8,530</p>
+                <p className="text-2xl font-bold text-gray-900">$6,640</p>
               </div>
             </div>
           </motion.div>
