@@ -263,7 +263,6 @@ const AdminDashboard = () => {
                   >
                     <motion.div
                       animate={{ 
-                        rotate: activeTab === item.id ? 360 : 0,
                         scale: activeTab === item.id ? 1.1 : 1
                       }}
                       transition={{ duration: 0.3 }}
